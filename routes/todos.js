@@ -25,7 +25,8 @@ router.get("/:id", (req, res) => {
       res.status(500).json({ error: "Failed to read data" });
     } else {
       const todos = JSON.parse(data);
-      const todo = todos.find((t) => t.id === parseInt(id));
+      console.log("todos----->", todos);
+      const todo = todos.Shopping.find((t) => t.id === parseInt(id));
       if (todo) {
         res.json(todo);
       } else {
@@ -43,7 +44,9 @@ router.post("/", (req, res) => {
       res.status(500).json({ error: "Failed to read data" });
     } else {
       const todos = JSON.parse(data);
-      newTodo.id = todos.length ? todos[todos.length - 1].id + 1 : 1;
+      newTodo.id = todos.Shopping.length
+        ? todos.Shopping[todos.Shopping.length - 1].id + 1
+        : 1;
       todos.push(newTodo);
       fs.writeFile(filePath, JSON.stringify(todos, null, 2), (err) => {
         if (err) {
@@ -65,9 +68,12 @@ router.put("/:id", (req, res) => {
       res.status(500).json({ error: "Failed to read data" });
     } else {
       let todos = JSON.parse(data);
-      const todoIndex = todos.findIndex((t) => t.id === parseInt(id));
+      const todoIndex = todos.Shopping.findIndex((t) => t.id === parseInt(id));
       if (todoIndex !== -1) {
-        todos[todoIndex] = { ...todos[todoIndex], ...updatedTodo };
+        todos.Shopping[todoIndex] = {
+          ...todos.Shopping[todoIndex],
+          ...updatedTodo,
+        };
         fs.writeFile(filePath, JSON.stringify(todos, null, 2), (err) => {
           if (err) {
             res.status(500).json({ error: "Failed to write data" });
@@ -90,7 +96,7 @@ router.delete("/:id", (req, res) => {
       res.status(500).json({ error: "Failed to read data" });
     } else {
       let todos = JSON.parse(data);
-      todos = todos.filter((t) => t.id !== parseInt(id));
+      todos = todos.Shopping.filter((t) => t.id !== parseInt(id));
       fs.writeFile(filePath, JSON.stringify(todos, null, 2), (err) => {
         if (err) {
           res.status(500).json({ error: "Failed to write data" });
