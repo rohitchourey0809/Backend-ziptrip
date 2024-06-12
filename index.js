@@ -7,7 +7,12 @@ const todosRoutes = require("./routes/todos");
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 app.use("/todos", todosRoutes);
 
