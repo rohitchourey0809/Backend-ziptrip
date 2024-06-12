@@ -1,4 +1,3 @@
-// todo-backend/routes/todos.js
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -6,18 +5,19 @@ const router = express.Router();
 
 const filePath = path.join(__dirname, "../data/todos.json");
 
-// Get all todos
+// Get all shopping items
 router.get("/", (req, res) => {
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.status(500).json({ error: "Failed to read data" });
     } else {
-      res.json(JSON.parse(data));
+      const todos = JSON.parse(data);
+      res.json(todos.Shopping);
     }
   });
 });
 
-// Get a single todo by id
+// Get a single shopping item by id
 router.get("/:id", (req, res) => {
   const id = req.params.id;
   fs.readFile(filePath, (err, data) => {
@@ -25,7 +25,6 @@ router.get("/:id", (req, res) => {
       res.status(500).json({ error: "Failed to read data" });
     } else {
       const todos = JSON.parse(data);
-      console.log("todos----->", todos);
       const todo = todos.Shopping.find((t) => t.id === parseInt(id));
       if (todo) {
         res.json(todo);
@@ -36,7 +35,7 @@ router.get("/:id", (req, res) => {
   });
 });
 
-// Create a new todo
+// Create a new shopping item
 router.post("/", (req, res) => {
   const newTodo = req.body;
   fs.readFile(filePath, (err, data) => {
@@ -47,7 +46,7 @@ router.post("/", (req, res) => {
       newTodo.id = todos.Shopping.length
         ? todos.Shopping[todos.Shopping.length - 1].id + 1
         : 1;
-      todos.push(newTodo);
+      todos.Shopping.push(newTodo);
       fs.writeFile(filePath, JSON.stringify(todos, null, 2), (err) => {
         if (err) {
           res.status(500).json({ error: "Failed to write data" });
@@ -59,7 +58,7 @@ router.post("/", (req, res) => {
   });
 });
 
-// Update a todo by id
+// Update a shopping item by id
 router.put("/:id", (req, res) => {
   const id = req.params.id;
   const updatedTodo = req.body;
@@ -78,7 +77,7 @@ router.put("/:id", (req, res) => {
           if (err) {
             res.status(500).json({ error: "Failed to write data" });
           } else {
-            res.json(todos[todoIndex]);
+            res.json(todos.Shopping[todoIndex]);
           }
         });
       } else {
@@ -88,7 +87,7 @@ router.put("/:id", (req, res) => {
   });
 });
 
-// Delete a todo by id
+// Delete a shopping item by id
 router.delete("/:id", (req, res) => {
   const id = req.params.id;
   fs.readFile(filePath, (err, data) => {
@@ -96,14 +95,19 @@ router.delete("/:id", (req, res) => {
       res.status(500).json({ error: "Failed to read data" });
     } else {
       let todos = JSON.parse(data);
-      todos = todos.Shopping.filter((t) => t.id !== parseInt(id));
-      fs.writeFile(filePath, JSON.stringify(todos, null, 2), (err) => {
-        if (err) {
-          res.status(500).json({ error: "Failed to write data" });
-        } else {
-          res.status(204).send();
-        }
-      });
+      const initialLength = todos.Shopping.length;
+      todos.Shopping = todos.Shopping.filter((t) => t.id !== parseInt(id));
+      if (todos.Shopping.length < initialLength) {
+        fs.writeFile(filePath, JSON.stringify(todos, null, 2), (err) => {
+          if (err) {
+            res.status(500).json({ error: "Failed to write data" });
+          } else {
+            res.status(204).send();
+          }
+        });
+      } else {
+        res.status(404).json({ error: "Todo not found" });
+      }
     }
   });
 });
