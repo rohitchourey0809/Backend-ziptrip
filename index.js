@@ -22,6 +22,7 @@ app.get("/api/todos", async (req, res) => {
     const todos = await Todo.find();
     res.json(todos);
   } catch (err) {
+    console.error(err);
     res.status(500).send("Server Error");
   }
 });
@@ -35,6 +36,7 @@ app.get("/api/todos/:id", async (req, res) => {
     }
     res.json(todo);
   } catch (err) {
+    console.error(err);
     res.status(500).send("Server Error");
   }
 });
@@ -51,6 +53,7 @@ app.post("/api/todos", async (req, res) => {
     const todo = await newTodo.save();
     res.status(201).json(todo);
   } catch (err) {
+    console.error(err);
     res.status(500).send("Server Error");
   }
 });
@@ -68,22 +71,30 @@ app.put("/api/todos/:id", async (req, res) => {
     }
     res.json(todo);
   } catch (err) {
+    console.error(err);
     res.status(500).send("Server Error");
   }
 });
 
 // Delete a todo
+
 app.delete("/api/todos/:id", async (req, res) => {
   try {
-    const todo = await Todo.findByIdAndRemove(req.params.id);
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).send("Invalid ID format");
+    }
+
+    const todo = await Todo.findByIdAndDelete(req.params.id);
     if (!todo) {
       return res.status(404).send("Todo not found");
     }
-    res.status(204).send();
+    res.status(204).send("Delete Successfully");
   } catch (err) {
+    console.error("Error deleting todo:", err);
     res.status(500).send("Server Error");
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
