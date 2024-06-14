@@ -4,7 +4,6 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const Todo = require("./models/Todos");
-
 const app = express();
 const PORT = 8080;
 
@@ -44,11 +43,12 @@ app.get("/api/todos/:id", async (req, res) => {
 // Create a new todo
 app.post("/api/todos", async (req, res) => {
   try {
+    const { title, task, description, completed } = req.body;
     const newTodo = new Todo({
-      title: req.body.title,
-      task: req.body.task,
-      description: req.body.description,
-      completed: req.body.completed,
+      title,
+      task,
+      description,
+      completed,
     });
     const todo = await newTodo.save();
     res.status(201).json(todo);
@@ -61,15 +61,16 @@ app.post("/api/todos", async (req, res) => {
 // Update a todo
 app.put("/api/todos/:id", async (req, res) => {
   try {
-    const todo = await Todo.findByIdAndUpdate(
+    const { title, task, description, completed } = req.body;
+    const updatedTodo = await Todo.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true } // Return the updated document
+      { title, task, description, completed },
+      { new: true }
     );
-    if (!todo) {
+    if (!updatedTodo) {
       return res.status(404).send("Todo not found");
     }
-    res.json(todo);
+    res.json(updatedTodo);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
@@ -77,24 +78,18 @@ app.put("/api/todos/:id", async (req, res) => {
 });
 
 // Delete a todo
-
 app.delete("/api/todos/:id", async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).send("Invalid ID format");
-    }
-
-    const todo = await Todo.findByIdAndDelete(req.params.id);
-    if (!todo) {
+    const deletedTodo = await Todo.findByIdAndDelete(req.params.id);
+    if (!deletedTodo) {
       return res.status(404).send("Todo not found");
     }
-    res.status(204).send("Delete Successfully");
+    res.status(204).send();
   } catch (err) {
-    console.error("Error deleting todo:", err);
+    console.error(err);
     res.status(500).send("Server Error");
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
