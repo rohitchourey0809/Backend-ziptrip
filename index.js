@@ -1,76 +1,87 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const fs = require("fs");
+const mongoose = require("mongoose");
+const connectDB = require("./config/db");
+const Todo = require("./models/Todos");
 
 const app = express();
 const PORT = 8080;
 
+// Connect to MongoDB
+connectDB();
+
 app.use(bodyParser.json());
 app.use(cors());
-
-let todos = [];
-
-// Load todos from file
-fs.readFile("todos.json", (err, data) => {
-  if (!err) {
-    todos = JSON.parse(data);
-  }
-});
-
-// Save todos to file
-function saveTodos() {
-  fs.writeFile("todos.json", JSON.stringify(todos), (err) => {
-    if (err) console.error("Error saving todos", err);
-  });
-}
 
 // CRUD APIs
 
 // Get all todos
-app.get("/api/todos", (req, res) => {
-  res.json(todos);
+app.get("/api/todos", async (req, res) => {
+  try {
+    const todos = await Todo.find();
+    res.json(todos);
+  } catch (err) {
+    res.status(500).send("Server Error");
+  }
 });
 
 // Get a single todo by ID
-app.get("/api/todos/:id", (req, res) => {
-  const todo = todos.find((t) => t.id === parseInt(req.params.id));
-  if (todo) {
+app.get("/api/todos/:id", async (req, res) => {
+  try {
+    const todo = await Todo.findById(req.params.id);
+    if (!todo) {
+      return res.status(404).send("Todo not found");
+    }
     res.json(todo);
-  } else {
-    res.status(404).send("Todo not found");
+  } catch (err) {
+    res.status(500).send("Server Error");
   }
 });
 
 // Create a new todo
-app.post("/api/todos", (req, res) => {
-  const newTodo = { id: Date.now(), ...req.body };
-  todos.push(newTodo);
-  saveTodos();
-  res.status(201).json(newTodo);
+app.post("/api/todos", async (req, res) => {
+  try {
+    const newTodo = new Todo({
+      title: req.body.title,
+      task: req.body.task,
+      description: req.body.description,
+      completed: req.body.completed,
+    });
+    const todo = await newTodo.save();
+    res.status(201).json(todo);
+  } catch (err) {
+    res.status(500).send("Server Error");
+  }
 });
 
 // Update a todo
-app.put("/api/todos/:id", (req, res) => {
-  const index = todos.findIndex((t) => t.id === parseInt(req.params.id));
-  if (index !== -1) {
-    todos[index] = { ...todos[index], ...req.body };
-    saveTodos();
-    res.json(todos[index]);
-  } else {
-    res.status(404).send("Todo not found");
+app.put("/api/todos/:id", async (req, res) => {
+  try {
+    const todo = await Todo.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true } // Return the updated document
+    );
+    if (!todo) {
+      return res.status(404).send("Todo not found");
+    }
+    res.json(todo);
+  } catch (err) {
+    res.status(500).send("Server Error");
   }
 });
 
 // Delete a todo
-app.delete("/api/todos/:id", (req, res) => {
-  const index = todos.findIndex((t) => t.id === parseInt(req.params.id));
-  if (index !== -1) {
-    todos.splice(index, 1);
-    saveTodos();
+app.delete("/api/todos/:id", async (req, res) => {
+  try {
+    const todo = await Todo.findByIdAndRemove(req.params.id);
+    if (!todo) {
+      return res.status(404).send("Todo not found");
+    }
     res.status(204).send();
-  } else {
-    res.status(404).send("Todo not found");
+  } catch (err) {
+    res.status(500).send("Server Error");
   }
 });
 
